@@ -16,7 +16,7 @@ What it does do (as root):
 
 1. Checks if Tor is installed. If not, it installs it.
 2. Checks if obfs4proxy is installed. If not installs it.
-3. Prints existing bridges made from `tor-instance-create`.
+3. Prints existing bridges made from `tor-instance-create`. What it prints is a complete line needed for copying+pasting into Tor Browser when manually configuring a Private Bridge.
 4. Asks: Add, Delete, or List bridges.
 
 I welcome feedback and contributions!
