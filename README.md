@@ -18,6 +18,7 @@ What it does do (as root):
 2. Checks if obfs4proxy is installed. If not installs it.
 3. Prints existing bridges made from `tor-instance-create`. What it prints is a complete line needed for copying+pasting into Tor Browser when manually configuring a Private Bridge.
 4. Asks: Add, Delete, or List bridges.
+5. When you add a new Bridge, it prints the torrc for easy reading and its location.
 
 I welcome feedback and contributions!
 
