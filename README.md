@@ -20,6 +20,7 @@ What it does do (as root):
 4. Asks: Add, Delete, or List bridges.
 5. When you add a new Bridge, it prints the torrc for easy reading and its location.
 
-I welcome feedback and contributions!
+# Install
 
-- @yawnbox
+`sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/emeraldonion/bridge-management/main/bridge-management.sh)"`
+
