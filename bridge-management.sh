@@ -11,27 +11,30 @@ echo -e "For more information about the license, visit https://creativecommons.o
 
 # Function to install Tor and obfs4proxy if they are not installed
 install_dependencies() {
-    echo  # Adding a line break after the message
+    echo
     echo "Checking for Tor installation..."
     if ! command -v tor > /dev/null; then
-	echo "Tor not found, installing..."
-        echo  # Adding a line break before the message
-	apt update && apt install gpg -y
+        echo "Tor not found, installing..."
+        echo
+        apt update && apt install gpg -y
+        echo "Adding Tor Project repository..."
+        echo "deb [signed-by=/usr/share/keyrings/tor-archive-keyring.gpg] https://deb.torproject.org/torproject.org $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/tor.list
         wget -qO- https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc | gpg --dearmor | tee /usr/share/keyrings/tor-archive-keyring.gpg >/dev/null
-        apt update && apt install tor deb.torproject.org-keyring -y
+        apt update
+        apt install tor -y
     else
         echo "Tor is already installed. Version: $(tor --version)"
-        echo  # Adding a line break before the message
+        echo
     fi
 
     echo "Checking for obfs4proxy installation..."
     if [ ! -f /usr/bin/obfs4proxy ]; then
         echo "obfs4proxy not found, installing..."
-	echo  # Adding a line break before the message
+        echo
         apt update && apt install obfs4proxy -y
     else
         echo "obfs4proxy is already installed."
-	echo  # Adding a line break before the message
+        echo
     fi
 }
 
