@@ -22,5 +22,7 @@ What it does do (as root):
 
 # Install
 
+Validated working on modern Debian and Ubuntu server systems:
+
 `sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/emeraldonion/bridge-management/main/bridge-management.sh)"`
 
