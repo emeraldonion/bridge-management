@@ -1,5 +1,7 @@
 # bridge-management
 
+<img width="1163" alt="Screenshot 2023-11-23 at 2 11 42 PM" src="https://github.com/emeraldonion/bridge-management/assets/8809920/599696b7-7f5e-456d-9415-7956a1ad6530">
+
 This script aims to make it easier to deploy and manage Tor obfs4 bridges. The inspiration for this script comes from years of being annoyed with Tor's UI and UX for bridge operators.
 
 Bridge deployment only asks for the following things:
