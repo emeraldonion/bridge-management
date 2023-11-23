@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Print authorship disclaimer in orange
-echo -e "\e[33mBridge Management script version 0.2.1"
+echo -e "\e[33mBridge Management script version 0.2.2"
 echo "Author: Emerald Onion"
 echo "Author's website: https://emeraldonion.org/"
 echo "Script's website: https://github.com/emeraldonion/bridge-management"
@@ -162,6 +162,18 @@ configure_bridge() {
     tor-instance-create "$bridge_name"
     config_file="/etc/tor/instances/$bridge_name/torrc"
 
+    # Derive the user and group from the bridge name
+    tor_user="_tor-${bridge_name}"
+    tor_group="_tor-${bridge_name}"
+
+    # Create and set permissions for the log directory
+    log_dir="/var/lib/tor-instances/$bridge_name/logs"
+    if [ ! -d "$log_dir" ]; then
+        sudo mkdir -p "$log_dir"
+        sudo chown "$tor_user":"$tor_group" "$log_dir"
+        sudo chmod 700 "$log_dir"
+    fi
+
     {
         echo "SocksPort auto"
         echo "BridgeRelay 1"
@@ -177,6 +189,7 @@ configure_bridge() {
         echo "Nickname $bridge_name"
         echo "BridgeDistribution $bridge_distribution"
         echo "HeartBeatPeriod 30 minutes"
+	echo "Log notice file $log_dir/notice.log" >> "$config_file"
     } > "$config_file"
 
     systemctl restart "tor@$bridge_name"
