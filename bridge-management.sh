@@ -36,6 +36,30 @@ install_dependencies() {
         echo "obfs4proxy is already installed."
         echo
     fi
+
+    # Configure obfs4proxy to bind on privileged ports
+    echo "Configuring obfs4proxy to bind on privileged ports..."
+    sudo setcap cap_net_bind_service=+ep /usr/bin/obfs4proxy
+
+    # Check and create systemd service directories if they don't exist
+    for SERVICE in tor@.service tor@default.service; do
+        DIR="/etc/systemd/system/${SERVICE}.d"
+        if [ ! -d "$DIR" ]; then
+            sudo mkdir "$DIR"
+        fi
+    done
+
+    # Check and update systemd configuration if necessary
+    OVERRIDE_CONF="[Service]\nNoNewPrivileges=no"
+    for SERVICE in tor@.service tor@default.service; do
+        OVERRIDE_FILE="/etc/systemd/system/${SERVICE}.d/override.conf"
+        if ! grep -q "NoNewPrivileges=no" "$OVERRIDE_FILE" 2>/dev/null; then
+            echo -e "$OVERRIDE_CONF" | sudo tee "$OVERRIDE_FILE"
+        fi
+    done
+
+    sudo systemctl daemon-reload
+    sudo service tor restart
 }
 
 # Function to list existing bridges and their obfs4 lines
