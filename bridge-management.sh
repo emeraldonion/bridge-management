@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Print authorship disclaimer in orange
-echo -e "\e[33mBridge Management script version 0.1"
+echo -e "\e[33mBridge Management script version 0.2.1"
 echo "Author: Emerald Onion"
 echo "Author's website: https://emeraldonion.org/"
 echo "Script's website: https://github.com/emeraldonion/bridge-management"
