@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Print authorship disclaimer in orange
-echo -e "\e[33mBridge Management script version 0.2.2"
+echo -e "\e[33mBridge Management script version 0.2.3"
 echo "Author: Emerald Onion"
 echo "Author's website: https://emeraldonion.org/"
 echo "Script's website: https://github.com/emeraldonion/bridge-management"
@@ -73,10 +73,11 @@ list_existing_bridges() {
             fingerprint_file="$instance_dir/fingerprint"
 
             if [ -f "$pt_state_file" ] && [ -f "$torrc_file" ] && [ -f "$fingerprint_file" ]; then
+		echo
 		echo "Found bridge: $bridge_name"
 
-                # Extracting socket (IP address and port) from torrc
-                socket=$(grep "ServerTransportListenAddr obfs4" "$torrc_file" | awk '{print $3}')
+                # Extracting only the first (IPv4) socket (IP address and port) from torrc
+                socket=$(grep "ServerTransportListenAddr obfs4" "$torrc_file" | head -1 | awk '{print $3}')
 
                 # Extracting fingerprint
 		fingerprint=$(cat "$fingerprint_file" | awk '{print $2}')
@@ -86,7 +87,17 @@ list_existing_bridges() {
 
                 # Constructing and printing the completed obfs4 line
                 completed_obfs4_line="obfs4 $socket $fingerprint $cert"
+		echo "Completed bridge line for Tor Browser:"
                 echo -e "\e[32m$completed_obfs4_line\e[0m"  # Print obfs4 line in green
+		
+		# Print file locations
+		echo "Bridge $bridge_name file locations:"
+		echo "Configuration: $torrc_file"
+		echo "Notice log: ${instance_dir}logs/notice.log"
+		echo "Obfs4 bridge line: ${instance_dir}pt_state/obfs4_bridgeline.txt"
+		echo "Fingerprint: ${instance_dir}fingerprint"
+		echo
+
             else
                 echo "Required files not found for $bridge_name"
             fi
@@ -97,8 +108,8 @@ list_existing_bridges() {
 # Function to manage bridges
 manage_bridges() {
     while true; do
-        echo 
-        echo "Select an action:"
+        echo
+	echo "Select an action:"
         echo -e "\e[34m1. Add a new bridge\e[0m"
         echo -e "\e[34m2. Delete an existing bridge\e[0m"
         echo -e "\e[34m3. List existing bridges\e[0m"
@@ -147,7 +158,8 @@ configure_bridge() {
     echo  # Adding a line break before the message
     echo "Please enter the following information for your bridge:"
     read -p "Bridge Name: " bridge_name
-    read -p "Bridge IPv4 Address: " bridge_ip
+    read -p "Bridge IPv4 Address: " bridge_ip4
+    read -p "Bridge IPv6 Address (or 'none'): " bridge_ip6
     read -p "Bridge obfs4 Port: " bridge_port
     read -p "Bridge Owner's Contact Email: " bridge_email
     read -p "Bridge Distribution (https/moat/email/telegram/settings/none/any): " bridge_distribution
@@ -174,22 +186,41 @@ configure_bridge() {
         sudo chmod 700 "$log_dir"
     fi
 
+    # Checking and formatting the IPv6 address
+    if [[ "$bridge_ip6" != "none" ]]; then
+        if [[ "$bridge_ip6" != \[*\]* ]]; then
+            bridge_ip6="[$bridge_ip6]"
+        fi
+    fi
+
     {
+        echo "# Relay General"
         echo "SocksPort auto"
-        echo "BridgeRelay 1"
-        echo "Address $bridge_ip"
-        echo "OutboundBindAddress $bridge_ip"
-        echo "ORPort $bridge_ip:auto"
         echo "AssumeReachable 1"
         echo "Exitpolicy reject *:*"
-        echo "ServerTransportPlugin obfs4 exec /usr/bin/obfs4proxy"
-        echo "ServerTransportListenAddr obfs4 $bridge_ip:$bridge_port"
-        echo "ExtORPort auto"
-        echo "ContactInfo $bridge_email"
         echo "Nickname $bridge_name"
-        echo "BridgeDistribution $bridge_distribution"
+        echo "ContactInfo $bridge_email"
         echo "HeartBeatPeriod 30 minutes"
-	echo "Log notice file $log_dir/notice.log" >> "$config_file"
+        echo "ConnDirectionStatistics 1"
+        echo "ExtraInfoStatistics 1"
+        echo "Log notice file $log_dir/notice.log"
+        echo "# Bridge General"
+        echo "BridgeRelay 1"
+        echo "BridgeDistribution $bridge_distribution"
+        echo "ServerTransportPlugin obfs4 exec /usr/bin/obfs4proxy"
+        echo "ExtORPort auto"
+        echo "# Bridge IPv4"
+        echo "Address $bridge_ip4"
+        echo "OutboundBindAddress $bridge_ip4"
+        echo "ORPort $bridge_ip4:auto"
+        echo "ServerTransportListenAddr obfs4 $bridge_ip4:$bridge_port"
+        if [ "$bridge_ip6" != "none" ]; then
+            echo "# Bridge IPv6"
+            echo "Address $bridge_ip6"
+            echo "OutboundBindAddress $bridge_ip6"
+            echo "ORPort $bridge_ip6:auto"
+            echo "ServerTransportListenAddr obfs4 $bridge_ip6:$bridge_port"
+        fi
     } > "$config_file"
 
     systemctl restart "tor@$bridge_name"
@@ -199,24 +230,35 @@ configure_bridge() {
 # Function to display the bridge information
 display_bridge_info() {
     echo 
-    echo "Fetching bridge information..."
-    sleep 3  # Wait for the logs to populate
+    echo "Fetching bridge information for bridge: $bridge_name..."
+    sleep 5  # Wait for the logs to populate
+
+    # File paths
+    torrc_file="/etc/tor/instances/$bridge_name/torrc"
+    log_file="/var/lib/tor-instances/$bridge_name/logs/notice.log"
+    pt_state_file="/var/lib/tor-instances/$bridge_name/pt_state/obfs4_bridgeline.txt"
+    fingerprint_file="/var/lib/tor-instances/$bridge_name/fingerprint"
 
     # Extracting socket (IP address and port) from torrc
-    torrc_file="/etc/tor/instances/$bridge_name/torrc"
-    socket=$(grep "ServerTransportListenAddr obfs4" "$torrc_file" | awk '{print $3}')
+    socket=$(grep "ServerTransportListenAddr obfs4" "$torrc_file" | head -1 | awk '{print $3}')
 
     # Extracting fingerprint
-    fingerprint_file="/var/lib/tor-instances/$bridge_name/fingerprint"
     fingerprint=$(cat "$fingerprint_file" | awk '{print $2}')
 
     # Extracting only the cert from obfs4_bridgeline.txt
-    pt_state_file="/var/lib/tor-instances/$bridge_name/pt_state/obfs4_bridgeline.txt"
     cert=$(grep "cert=" "$pt_state_file" | cut -d ' ' -f6-)
 
     # Constructing and printing the completed obfs4 line
     obfs4_line="obfs4 $socket $fingerprint $cert"
+    echo "Completed bridge line for Tor Browser:"
     echo -e "\e[32m$obfs4_line\e[0m"  # Print obfs4 line in green
+
+    # Print file locations
+    echo "Bridge $bridge_name file locations:"
+    echo "Configuration: $torrc_file"
+    echo "Notice log: $log_file"
+    echo "Obfs4 bride line: $pt_state_file"
+    echo "Fingerprint: $fingerprint_file"
 }
 
 # Function to print the torrc file location and content
@@ -224,7 +266,6 @@ print_torrc_info() {
     config_file="/etc/tor/instances/$bridge_name/torrc"
     echo 
     echo "Configuration file location: $config_file"
-    echo -e "\e[32mContent of $config_file:\e[0m"
     echo -e "\e[32m$(cat $config_file)\e[0m"  # Print content of torrc in green
 }
 
