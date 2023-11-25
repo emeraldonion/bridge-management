@@ -1,4 +1,4 @@
-# bridge-management
+# An easy to use shell script for Tor bridge operators
 
 Alpha v0.2.3
 
