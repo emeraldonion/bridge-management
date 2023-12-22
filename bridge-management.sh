@@ -257,7 +257,7 @@ display_bridge_info() {
     echo "Bridge $bridge_name file locations:"
     echo "Configuration: $torrc_file"
     echo "Notice log: $log_file"
-    echo "Obfs4 bride line: $pt_state_file"
+    echo "Obfs4 bridge line: $pt_state_file"
     echo "Fingerprint: $fingerprint_file"
 }
 
