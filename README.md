@@ -2,6 +2,8 @@
 
 Alpha v0.2.3
 
+Last tested 2025-01-26
+
 <img width="1132" alt="Screenshot 2023-11-25 at 2 40 06 PM" src="https://github.com/emeraldonion/bridge-management/assets/8809920/333563f7-7608-4afe-9d5c-47e356907a83">
 
 
